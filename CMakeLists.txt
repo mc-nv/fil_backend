@@ -262,7 +262,10 @@ else()
   )
 
   if(TRITON_ENABLE_GPU)
-    list(APPEND BACKEND_TARGET "cuml" "rmm" "rapids_logger")
+    list(APPEND BACKEND_TARGET "cuml" "rmm")
+    if(TARGET "rapids_logger")
+      list(APPEND BACKEND_TARGET "rapids_logger")
+    endif()
   endif()
   list(APPEND BACKEND_TARGET "nvforest++")
 
