@@ -64,7 +64,6 @@ HELP="$0 [<target> ...] [<flag> ...]
                             simply be built with the current version of the code
    TREELITE_STATIC        - If ON, Treelite will be statically linked into the binaries
    RAPIDS_VERSION         - The version of RAPIDS to require for RAPIDS dependencies
-   RAPIDS_TRITON_REPO_TAG - Commit ref for RAPIDS-Triton
 "
 
 BUILD_TYPE=Release
@@ -213,11 +212,6 @@ else
   [ ! -z $CORE_REF ] || CORE_REF='main'
   [ ! -z $BACKEND_REF ] || BACKEND_REF='main'
   [ ! -z $THIRDPARTY_REF ] || THIRDPARTY_REF='main'
-fi
-
-if [ ! -z $RAPIDS_TRITON_REPO_TAG ]
-then
-  DOCKER_ARGS="$DOCKER_ARGS --build-arg RAPIDS_TRITON_REPO_TAG=${RAPIDS_TRITON_REPO_TAG}"
 fi
 
 if [ ! -z $SDK_IMAGE ]
