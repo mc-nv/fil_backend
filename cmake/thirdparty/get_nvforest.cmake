@@ -29,9 +29,6 @@ function(find_and_configure_nvforest)
             GIT_TAG        ${PKG_PINNED_TAG}
             SOURCE_SUBDIR  cpp
             GIT_SHALLOW    TRUE
-            # Patch nvForest to exclude RAFT if GPU is disabled
-            # TODO(hcho3): Upstream patch to nvForest
-            PATCHES        "./patches/nvforest.patch"
             OPTIONS
               "BUILD_NVFOREST_TESTS OFF"
               "BUILD_SHARED_LIBS ON"
@@ -44,9 +41,9 @@ function(find_and_configure_nvforest)
 
 endfunction()
 
-find_and_configure_nvforest(VERSION    26.06
-                            FORK       rapidsai
-                            PINNED_TAG a9216c6162daef1434fd4cfa554c7a963c6b2016
+find_and_configure_nvforest(VERSION    26.08
+                            FORK       hcho3
+                            PINNED_TAG c11de818fbe42c7e22f3d3f19b209540465dbf69
                             USE_TREELITE_STATIC ${TRITON_FIL_USE_TREELITE_STATIC}
                             ENABLE_GPU ${TRITON_ENABLE_GPU}
                             )
