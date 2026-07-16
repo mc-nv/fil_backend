@@ -1,5 +1,5 @@
 #=============================================================================
-# Copyright (c) 2020-2024, NVIDIA CORPORATION.
+# Copyright (c) 2020-2026, NVIDIA CORPORATION.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -183,31 +183,6 @@ else()
     include(cmake/thirdparty/get_gtest.cmake)
   endif()
 
-  file(GLOB_RECURSE RAPIDS_TRITON_HEADERS CONFIGURE_DEPENDS
-    "${CMAKE_CURRENT_SOURCE_DIR}/rapids_triton/*.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/rapids_triton/*.hpp"
-  )
-  add_library(rapids_triton INTERFACE ${RAPIDS_TRITON_HEADERS})
-  add_library(rapids_triton::rapids_triton ALIAS rapids_triton)
-  target_include_directories(rapids_triton INTERFACE
-    "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/rapids_triton>"
-    "$<INSTALL_INTERFACE:include>"
-  )
-  target_link_libraries(rapids_triton INTERFACE
-    $<$<BOOL:${TRITON_ENABLE_GPU}>:rmm::rmm>
-    $<$<BOOL:${TRITON_ENABLE_GPU}>:raft::raft>
-    triton-core-serverstub
-    triton-backend-utils
-  )
-  if(TRITON_ENABLE_GPU)
-    target_compile_features(rapids_triton INTERFACE
-      cxx_std_17
-      $<BUILD_INTERFACE:cuda_std_17>
-    )
-  else()
-    target_compile_features(rapids_triton INTERFACE cxx_std_17)
-  endif()
-
   ##############################################################################
   # - install targets-----------------------------------------------------------
 
@@ -262,9 +237,10 @@ else()
   target_link_libraries(${BACKEND_TARGET}
   PRIVATE
     $<$<BOOL:${TRITON_ENABLE_GPU}>:cuml>
+    $<$<BOOL:${TRITON_ENABLE_GPU}>:rmm::rmm>
+    $<$<BOOL:${TRITON_ENABLE_GPU}>:raft::raft>
     ${TREELITE_LIBS}
     nvforest::nvforest++
-    rapids_triton::rapids_triton
     triton-core-serverstub
     triton-backend-utils
     "${TRITONSERVER_LIB}"
