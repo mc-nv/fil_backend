@@ -40,13 +40,16 @@ TEST(RapidsTriton, copy)
   data_out = std::vector<int>(data.size());
 #ifdef TRITON_ENABLE_GPU
   auto* ptr_d = static_cast<int*>(nullptr);
-  cudaMalloc(reinterpret_cast<void**>(&ptr_d), sizeof(int) * data.size());
+  cuda_check(cudaMalloc(reinterpret_cast<void**>(&ptr_d), sizeof(int) * data.size()));
   detail::copy(ptr_d, data.data(), data.size(), 0, DeviceMemory, HostMemory);
+  cuda_check(cudaDeviceSynchronize());
 
-  cudaMemcpy(static_cast<void*>(data_out.data()),
+  cuda_check(
+        cudaMemcpy(static_cast<void*>(data_out.data()),
              static_cast<void*>(ptr_d),
              sizeof(int) * data.size(),
-             cudaMemcpyDeviceToHost);
+             cudaMemcpyDeviceToHost));
+  cuda_check(cudaDeviceSynchronize());
   EXPECT_THAT(data_out, ::testing::ElementsAreArray(data));
   cudaFree(reinterpret_cast<void*>(ptr_d));
 #else

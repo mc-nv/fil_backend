@@ -31,6 +31,12 @@ function(ConfigureTest)
     set(_TRITON_FIL_TEST_PERCENT 100)
   endif()
 
+  find_library(
+    TRITONSERVER_LIB
+    tritonserver
+    PATHS /home/phcho/Desktop/fil_backend
+  )
+
   add_executable(${_TRITON_FIL_TEST_NAME} ${_TRITON_FIL_TEST_UNPARSED_ARGUMENTS})
   target_link_libraries(
     ${_TRITON_FIL_TEST_NAME}
@@ -49,6 +55,9 @@ function(ConfigureTest)
       $<TARGET_NAME_IF_EXISTS:conda_env>
       OpenMP::OpenMP_CXX
       rapidjson)
+  if(TRITON_ENABLE_GPU)
+    target_compile_definitions(${_TRITON_FIL_TEST_NAME} PRIVATE -DTRITON_ENABLE_GPU=1)
+  endif()
 
   target_compile_options(${_TRITON_FIL_TEST_NAME} PRIVATE "$<$<COMPILE_LANGUAGE:CXX>:${TRITON_FIL_CXX_FLAGS}>"
                                                         "$<$<COMPILE_LANGUAGE:CUDA>:${TRITON_FIL_CUDA_FLAGS}>")
