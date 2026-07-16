@@ -78,9 +78,9 @@ else()
 
   ##############################################################################
   # - Prepare rapids-cmake -----------------------------------------------------
-  set(rapids-cmake-version 26.06)
+  set(rapids-cmake-version 26.08)
   file(DOWNLOAD
-    https://raw.githubusercontent.com/rapidsai/rapids-cmake/refs/tags/v26.06.00/RAPIDS.cmake
+    https://raw.githubusercontent.com/rapidsai/rapids-cmake/691ccac03770627311b271e9dc5820f6ea2b6346/RAPIDS.cmake
       ${CMAKE_BINARY_DIR}/RAPIDS.cmake)
   include(${CMAKE_BINARY_DIR}/RAPIDS.cmake)
   include(rapids-cmake)
@@ -279,8 +279,9 @@ else()
   ##############################################################################
   # - build test executable ----------------------------------------------------
 
-  # TODO (wphicks)
-  # if(BUILD_TESTS)
-  #   include(test/CMakeLists.txt)
-  # endif()
+  if(BUILD_TESTS)
+    include(${rapids-cmake-dir}/cpm/gtest.cmake)
+    rapids_cpm_gtest(BUILD_STATIC)
+    add_subdirectory(test)
+  endif()
 endif() # TRITON_FIL_DOCKER_BUILD
