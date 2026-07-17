@@ -48,7 +48,7 @@ function(ConfigureTest)
       $<$<BOOL:${TRITON_ENABLE_GPU}>:rmm::rmm>
       $<$<BOOL:${TRITON_ENABLE_GPU}>:raft::raft>
       ${TREELITE_LIBS}
-      nvforest::nvforest++
+      nvforest::nvforest
       triton-core-serverstub
       triton-backend-utils
       "${TRITONSERVER_LIB}"

@@ -21,7 +21,7 @@ function(find_and_configure_nvforest)
                           "${multiValueArgs}" ${ARGN} )
 
     rapids_cpm_find(nvforest ${PKG_VERSION}
-      GLOBAL_TARGETS      nvforest++
+      GLOBAL_TARGETS      nvforest
       BUILD_EXPORT_SET    rapids_triton-exports
       INSTALL_EXPORT_SET  rapids_triton-exports
         CPM_ARGS
@@ -42,7 +42,7 @@ endfunction()
 
 find_and_configure_nvforest(VERSION    26.08
                             FORK       rapidsai
-                            PINNED_TAG bcf0737e71b1e1034750c38da490de4c5facca1f
+                            PINNED_TAG dd49f1a906654f59f20023849b2f1cae820f601f
                             USE_TREELITE_STATIC ${TRITON_FIL_USE_TREELITE_STATIC}
                             ENABLE_GPU ${TRITON_ENABLE_GPU}
                             )

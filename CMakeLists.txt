@@ -240,7 +240,7 @@ else()
     $<$<BOOL:${TRITON_ENABLE_GPU}>:rmm::rmm>
     $<$<BOOL:${TRITON_ENABLE_GPU}>:raft::raft>
     ${TREELITE_LIBS}
-    nvforest::nvforest++
+    nvforest::nvforest
     triton-core-serverstub
     triton-backend-utils
     "${TRITONSERVER_LIB}"
@@ -265,7 +265,7 @@ else()
       list(APPEND BACKEND_TARGET "rapids_logger")
     endif()
   endif()
-  list(APPEND BACKEND_TARGET "nvforest++")
+  list(APPEND BACKEND_TARGET "nvforest")
 
   if(NOT TRITON_FIL_USE_TREELITE_STATIC)
     list(APPEND BACKEND_TARGET ${TREELITE_LIBS_NO_PREFIX})
