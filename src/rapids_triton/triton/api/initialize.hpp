@@ -30,11 +30,9 @@
 #include <rapids_triton/triton/logging.hpp>
 #include <string>
 
-namespace triton {
-namespace backend {
-namespace rapids {
-namespace triton_api {
-inline auto* initialize(TRITONBACKEND_Backend* backend)
+namespace triton { namespace backend { namespace rapids { namespace triton_api {
+inline auto*
+initialize(TRITONBACKEND_Backend* backend)
 {
   auto* result = static_cast<TRITONSERVER_Error*>(nullptr);
   try {
@@ -43,27 +41,29 @@ inline auto* initialize(TRITONBACKEND_Backend* backend)
     log_info(__FILE__, __LINE__) << "TRITONBACKEND_Initialize: " << name;
 
     if (!check_backend_version(*backend)) {
-      throw TritonException{Error::Unsupported,
-                            "triton backend API version does not support this backend"};
+      throw TritonException{
+          Error::Unsupported,
+          "triton backend API version does not support this backend"};
     }
     if constexpr (IS_GPU_BUILD) {
       auto device_count = int{};
-      auto cuda_err     = cudaGetDeviceCount(&device_count);
+      auto cuda_err = cudaGetDeviceCount(&device_count);
       if (device_count > 0 && cuda_err == cudaSuccess) {
         auto device_id = int{};
         cuda_check(cudaGetDevice(&device_id));
-        auto* triton_manager = static_cast<TRITONBACKEND_MemoryManager*>(nullptr);
-        triton_check(TRITONBACKEND_BackendMemoryManager(backend, &triton_manager));
+        auto* triton_manager =
+            static_cast<TRITONBACKEND_MemoryManager*>(nullptr);
+        triton_check(
+            TRITONBACKEND_BackendMemoryManager(backend, &triton_manager));
 
-        setup_memory_resource(static_cast<device_id_t>(device_id), triton_manager);
+        setup_memory_resource(
+            static_cast<device_id_t>(device_id), triton_manager);
       }
     }
-  } catch (TritonException& err) {
+  }
+  catch (TritonException& err) {
     result = err.error();
   }
   return result;
 }
-}  // namespace triton_api
-}  // namespace rapids
-}  // namespace backend
-}  // namespace triton
+}}}}  // namespace triton::backend::rapids::triton_api

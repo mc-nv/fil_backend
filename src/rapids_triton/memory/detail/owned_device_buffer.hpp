@@ -15,16 +15,9 @@
  */
 
 #pragma once
-namespace triton {
-namespace backend {
-namespace rapids {
-namespace detail {
+namespace triton { namespace backend { namespace rapids { namespace detail {
 
-template<typename T, bool enable_gpu>
-struct owned_device_buffer {
-};
+template <typename T, bool enable_gpu>
+struct owned_device_buffer {};
 
-}  // namespace detail
-}  // namespace rapids
-}  // namespace backend
-}  // namespace triton
+}}}}  // namespace triton::backend::rapids::detail

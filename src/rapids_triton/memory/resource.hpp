@@ -26,14 +26,14 @@
 #include <rapids_triton/memory/detail/cpu_only/resource.hpp>
 #endif
 
-namespace triton {
-namespace backend {
-namespace rapids {
+namespace triton { namespace backend { namespace rapids {
 
-inline void setup_memory_resource(device_id_t device_id, TRITONBACKEND_MemoryManager* triton_manager = nullptr) {
+inline void
+setup_memory_resource(
+    device_id_t device_id,
+    TRITONBACKEND_MemoryManager* triton_manager = nullptr)
+{
   detail::setup_memory_resource<IS_GPU_BUILD>(device_id, triton_manager);
 }
 
-}  // namespace rapids
-}  // namespace backend
-}  // namespace triton
+}}}  // namespace triton::backend::rapids

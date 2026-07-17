@@ -22,21 +22,19 @@
 #include <rapids_triton/utils/safe_multiply.hpp>
 #include <rmm/device_buffer.hpp>
 
-namespace triton {
-namespace backend {
-namespace rapids {
-namespace detail {
+namespace triton { namespace backend { namespace rapids { namespace detail {
 
-template<typename T>
+template <typename T>
 struct owned_device_buffer<T, true> {
   using non_const_T = std::remove_const_t<T>;
-  owned_device_buffer(device_id_t device_id, std::size_t size, cudaStream_t stream)
-    : data_{[&device_id, &size, &stream]() {
-      auto device_context = device_setter{device_id};
-      return rmm::device_buffer{
-        safe_multiply<std::size_t>(size, sizeof(T)),
-        rmm::cuda_stream_view{stream}};
-    }()}
+  owned_device_buffer(
+      device_id_t device_id, std::size_t size, cudaStream_t stream)
+      : data_{[&device_id, &size, &stream]() {
+          auto device_context = device_setter{device_id};
+          return rmm::device_buffer{
+              safe_multiply<std::size_t>(size, sizeof(T)),
+              rmm::cuda_stream_view{stream}};
+        }()}
   {
   }
 
@@ -46,7 +44,4 @@ struct owned_device_buffer<T, true> {
   mutable rmm::device_buffer data_;
 };
 
-}  // namespace detail
-}  // namespace rapids
-}  // namespace backend
-}  // namespace triton
+}}}}  // namespace triton::backend::rapids::detail

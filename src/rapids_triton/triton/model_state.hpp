@@ -16,17 +16,16 @@
 
 #pragma once
 #include <triton/backend/backend_model.h>
+
 #include <memory>
 #include <rapids_triton/triton/model.hpp>
 
-namespace triton {
-namespace backend {
-namespace rapids {
+namespace triton { namespace backend { namespace rapids {
 template <typename RapidsSharedState>
 struct TritonModelState : public BackendModel {
   TritonModelState(TRITONBACKEND_Model& triton_model)
-    : BackendModel(&triton_model),
-      state_{std::make_shared<RapidsSharedState>(get_model_config(triton_model))}
+      : BackendModel(&triton_model), state_{std::make_shared<RapidsSharedState>(
+                                         get_model_config(triton_model))}
   {
   }
 
@@ -39,6 +38,4 @@ struct TritonModelState : public BackendModel {
   std::shared_ptr<RapidsSharedState> state_;
 };
 
-}  // namespace rapids
-}  // namespace backend
-}  // namespace triton
+}}}  // namespace triton::backend::rapids

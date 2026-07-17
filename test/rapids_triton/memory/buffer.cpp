@@ -27,9 +27,7 @@
 #include <rapids_triton/memory/types.hpp>
 #include <vector>
 
-namespace triton {
-namespace backend {
-namespace rapids {
+namespace triton { namespace backend { namespace rapids {
 TEST(RapidsTriton, default_buffer)
 {
   auto buffer = Buffer<int>();
@@ -58,14 +56,12 @@ TEST(RapidsTriton, device_buffer)
   ASSERT_NE(buffer.data(), nullptr);
 
   auto data_out = std::vector<int>(data.size());
-  cudaMemcpy(static_cast<void*>(buffer.data()),
-             static_cast<void*>(data.data()),
-             sizeof(int) * data.size(),
-             cudaMemcpyHostToDevice);
-  cudaMemcpy(static_cast<void*>(data_out.data()),
-             static_cast<void*>(buffer.data()),
-             sizeof(int) * data.size(),
-             cudaMemcpyDeviceToHost);
+  cudaMemcpy(
+      static_cast<void*>(buffer.data()), static_cast<void*>(data.data()),
+      sizeof(int) * data.size(), cudaMemcpyHostToDevice);
+  cudaMemcpy(
+      static_cast<void*>(data_out.data()), static_cast<void*>(buffer.data()),
+      sizeof(int) * data.size(), cudaMemcpyDeviceToHost);
   EXPECT_THAT(data_out, ::testing::ElementsAreArray(data));
 
 #else
@@ -79,10 +75,9 @@ TEST(RapidsTriton, non_owning_device_buffer)
 #ifdef TRITON_ENABLE_GPU
   auto* ptr_d = static_cast<int*>(nullptr);
   cudaMalloc(reinterpret_cast<void**>(&ptr_d), sizeof(int) * data.size());
-  cudaMemcpy(static_cast<void*>(ptr_d),
-             static_cast<void*>(data.data()),
-             sizeof(int) * data.size(),
-             cudaMemcpyHostToDevice);
+  cudaMemcpy(
+      static_cast<void*>(ptr_d), static_cast<void*>(data.data()),
+      sizeof(int) * data.size(), cudaMemcpyHostToDevice);
   auto buffer = Buffer<int>(ptr_d, data.size(), DeviceMemory);
 
   ASSERT_EQ(buffer.mem_type(), DeviceMemory);
@@ -90,21 +85,21 @@ TEST(RapidsTriton, non_owning_device_buffer)
   ASSERT_EQ(buffer.data(), ptr_d);
 
   auto data_out = std::vector<int>(data.size());
-  cudaMemcpy(static_cast<void*>(data_out.data()),
-             static_cast<void*>(buffer.data()),
-             sizeof(int) * data.size(),
-             cudaMemcpyDeviceToHost);
+  cudaMemcpy(
+      static_cast<void*>(data_out.data()), static_cast<void*>(buffer.data()),
+      sizeof(int) * data.size(), cudaMemcpyDeviceToHost);
   EXPECT_THAT(data_out, ::testing::ElementsAreArray(data));
 
   cudaFree(reinterpret_cast<void*>(ptr_d));
 #else
-  ASSERT_THROW(Buffer<int>(data.data(), data.size(), DeviceMemory), TritonException);
+  ASSERT_THROW(
+      Buffer<int>(data.data(), data.size(), DeviceMemory), TritonException);
 #endif
 }
 
 TEST(RapidsTriton, host_buffer)
 {
-  auto data   = std::vector<int>{1, 2, 3};
+  auto data = std::vector<int>{1, 2, 3};
   auto buffer = Buffer<int>(data.size(), HostMemory, 0, 0);
 
   ASSERT_EQ(buffer.mem_type(), HostMemory);
@@ -112,49 +107,54 @@ TEST(RapidsTriton, host_buffer)
   ASSERT_NE(buffer.data(), nullptr);
 
   std::memcpy(
-    static_cast<void*>(buffer.data()), static_cast<void*>(data.data()), data.size() * sizeof(int));
+      static_cast<void*>(buffer.data()), static_cast<void*>(data.data()),
+      data.size() * sizeof(int));
 
-  auto data_out = std::vector<int>(buffer.data(), buffer.data() + buffer.size());
+  auto data_out =
+      std::vector<int>(buffer.data(), buffer.data() + buffer.size());
   EXPECT_THAT(data_out, ::testing::ElementsAreArray(data));
 }
 
 TEST(RapidsTriton, non_owning_host_buffer)
 {
-  auto data   = std::vector<int>{1, 2, 3};
+  auto data = std::vector<int>{1, 2, 3};
   auto buffer = Buffer<int>(data.data(), data.size(), HostMemory);
 
   ASSERT_EQ(buffer.mem_type(), HostMemory);
   ASSERT_EQ(buffer.size(), data.size());
   ASSERT_EQ(buffer.data(), data.data());
 
-  auto data_out = std::vector<int>(buffer.data(), buffer.data() + buffer.size());
+  auto data_out =
+      std::vector<int>(buffer.data(), buffer.data() + buffer.size());
   EXPECT_THAT(data_out, ::testing::ElementsAreArray(data));
 }
 
 TEST(RapidsTriton, copy_buffer)
 {
-  auto data        = std::vector<int>{1, 2, 3};
+  auto data = std::vector<int>{1, 2, 3};
   auto orig_buffer = Buffer<int>(data.data(), data.size(), HostMemory);
-  auto buffer      = Buffer<int>(orig_buffer);
+  auto buffer = Buffer<int>(orig_buffer);
 
   ASSERT_EQ(buffer.mem_type(), HostMemory);
   ASSERT_EQ(buffer.size(), data.size());
   ASSERT_NE(buffer.data(), orig_buffer.data());
 
-  auto data_out = std::vector<int>(buffer.data(), buffer.data() + buffer.size());
+  auto data_out =
+      std::vector<int>(buffer.data(), buffer.data() + buffer.size());
   EXPECT_THAT(data_out, ::testing::ElementsAreArray(data));
 }
 
 TEST(RapidsTriton, move_buffer)
 {
-  auto data   = std::vector<int>{1, 2, 3};
+  auto data = std::vector<int>{1, 2, 3};
   auto buffer = Buffer<int>(Buffer<int>(data.data(), data.size(), HostMemory));
 
   ASSERT_EQ(buffer.mem_type(), HostMemory);
   ASSERT_EQ(buffer.size(), data.size());
   ASSERT_EQ(buffer.data(), data.data());
 
-  auto data_out = std::vector<int>(buffer.data(), buffer.data() + buffer.size());
+  auto data_out =
+      std::vector<int>(buffer.data(), buffer.data() + buffer.size());
   EXPECT_THAT(data_out, ::testing::ElementsAreArray(data));
 }
 
@@ -167,12 +167,10 @@ TEST(RapidsTriton, move_assignment_buffer)
 #else
   auto buffer = Buffer<int>{data.data(), data.size() - 1, HostMemory};
 #endif
-  buffer      = Buffer<int>{data.size(), HostMemory};
+  buffer = Buffer<int>{data.size(), HostMemory};
 
   ASSERT_EQ(buffer.mem_type(), HostMemory);
   ASSERT_EQ(buffer.size(), data.size());
 }
 
-}  // namespace rapids
-}  // namespace backend
-}  // namespace triton
+}}}  // namespace triton::backend::rapids

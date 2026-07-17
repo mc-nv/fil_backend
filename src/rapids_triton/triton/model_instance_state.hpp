@@ -16,27 +16,26 @@
 
 #pragma once
 #include <triton/backend/backend_model_instance.h>
+
 #include <cstdint>
 #include <memory>
 #include <rapids_triton/triton/model_instance.hpp>
 #include <rapids_triton/triton/model_state.hpp>
 
-namespace triton {
-namespace backend {
-namespace rapids {
+namespace triton { namespace backend { namespace rapids {
 
 template <typename RapidsModel, typename RapidsSharedState>
 struct ModelInstanceState : public BackendModelInstance {
-  ModelInstanceState(TritonModelState<RapidsSharedState>& model_state,
-                     TRITONBACKEND_ModelInstance* triton_model_instance)
-    : BackendModelInstance(&model_state, triton_model_instance),
-      model_(model_state.get_shared_state(),
-             rapids::get_device_id(*triton_model_instance),
-             CudaStream(),
-             Kind(),
-             JoinPath({model_state.RepositoryPath(),
-                       std::to_string(model_state.Version()),
-                       ArtifactFilename()}))
+  ModelInstanceState(
+      TritonModelState<RapidsSharedState>& model_state,
+      TRITONBACKEND_ModelInstance* triton_model_instance)
+      : BackendModelInstance(&model_state, triton_model_instance),
+        model_(
+            model_state.get_shared_state(),
+            rapids::get_device_id(*triton_model_instance), CudaStream(), Kind(),
+            JoinPath(
+                {model_state.RepositoryPath(),
+                 std::to_string(model_state.Version()), ArtifactFilename()}))
   {
   }
 
@@ -49,6 +48,4 @@ struct ModelInstanceState : public BackendModelInstance {
   RapidsModel model_;
 };
 
-}  // namespace rapids
-}  // namespace backend
-}  // namespace triton
+}}}  // namespace triton::backend::rapids

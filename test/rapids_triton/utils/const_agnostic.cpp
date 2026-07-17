@@ -19,15 +19,12 @@
 #include <rapids_triton/utils/const_agnostic.hpp>
 #include <type_traits>
 
-namespace triton {
-namespace backend {
-namespace rapids {
+namespace triton { namespace backend { namespace rapids {
 TEST(RapidsTriton, const_agnostic)
 {
-  static_assert(std::is_same<const_agnostic_same_t<bool const, bool>, void>::value);
+  static_assert(
+      std::is_same<const_agnostic_same_t<bool const, bool>, void>::value);
   static_assert(std::is_same<const_agnostic_same_t<bool, bool>, void>::value);
 }
 
-}  // namespace rapids
-}  // namespace backend
-}  // namespace triton
+}}}  // namespace triton::backend::rapids

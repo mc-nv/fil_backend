@@ -19,9 +19,7 @@
 #include <iostream>
 #include <rapids_triton/triton/logging.hpp>
 
-namespace triton {
-namespace backend {
-namespace rapids {
+namespace triton { namespace backend { namespace rapids {
 TEST(RapidsTriton, logging)
 {
   log_debug("Debug test message");
@@ -38,6 +36,4 @@ TEST(RapidsTriton, stream_logging)
   log_error() << "Streamed error test message";
 }
 
-}  // namespace rapids
-}  // namespace backend
-}  // namespace triton
+}}}  // namespace triton::backend::rapids

@@ -19,17 +19,14 @@
 
 #include <rapids_triton/triton/device.hpp>
 
-namespace triton {
-namespace backend {
-namespace rapids {
-namespace detail {
+namespace triton { namespace backend { namespace rapids { namespace detail {
 
-template<bool enable_gpu>
-inline void setup_memory_resource(device_id_t device_id,
-                                   TRITONBACKEND_MemoryManager* triton_manager = nullptr) {
+template <bool enable_gpu>
+inline void
+setup_memory_resource(
+    device_id_t device_id,
+    TRITONBACKEND_MemoryManager* triton_manager = nullptr)
+{
 }
 
-}  // namespace detail
-}  // namespace rapids
-}  // namespace backend
-}  // namespace triton
+}}}}  // namespace triton::backend::rapids::detail

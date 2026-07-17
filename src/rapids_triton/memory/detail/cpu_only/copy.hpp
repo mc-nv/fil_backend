@@ -24,27 +24,20 @@
 #include <rapids_triton/exceptions.hpp>
 #include <rapids_triton/memory/types.hpp>
 
-namespace triton {
-namespace backend {
-namespace rapids {
-namespace detail {
+namespace triton { namespace backend { namespace rapids { namespace detail {
 
 template <typename T>
-void copy(T* dst,
-          T const* src,
-          std::size_t len,
-          cudaStream_t stream,
-          MemoryType dst_type,
-          MemoryType src_type)
+void
+copy(
+    T* dst, T const* src, std::size_t len, cudaStream_t stream,
+    MemoryType dst_type, MemoryType src_type)
 {
   if (dst_type == DeviceMemory || src_type == DeviceMemory) {
-    throw TritonException(Error::Internal, "Cannot copy device memory in non-GPU build");
+    throw TritonException(
+        Error::Internal, "Cannot copy device memory in non-GPU build");
   } else {
     std::memcpy(dst, src, len * sizeof(T));
   }
 }
 
-}  // namespace detail
-}  // namespace rapids
-}  // namespace backend
-}  // namespace triton
+}}}}  // namespace triton::backend::rapids::detail

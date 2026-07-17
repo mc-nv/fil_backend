@@ -17,44 +17,51 @@
 #pragma once
 #include <triton/backend/backend_common.h>
 #include <triton/core/tritonbackend.h>
+
 #include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <rapids_triton/exceptions.hpp>
 #include <string>
 
-namespace triton {
-namespace backend {
-namespace rapids {
+namespace triton { namespace backend { namespace rapids {
 
-inline auto get_model_version(TRITONBACKEND_Model& model)
+inline auto
+get_model_version(TRITONBACKEND_Model& model)
 {
   auto version = std::uint64_t{};
   triton_check(TRITONBACKEND_ModelVersion(&model, &version));
   return version;
 }
 
-inline auto get_model_name(TRITONBACKEND_Model& model)
+inline auto
+get_model_name(TRITONBACKEND_Model& model)
 {
   auto* cname = static_cast<char const*>(nullptr);
   triton_check(TRITONBACKEND_ModelName(&model, &cname));
   return std::string(cname);
 }
 
-inline auto get_model_config(TRITONBACKEND_Model& model)
+inline auto
+get_model_config(TRITONBACKEND_Model& model)
 {
   auto* config_message = static_cast<TRITONSERVER_Message*>(nullptr);
   triton_check(TRITONBACKEND_ModelConfig(&model, 1, &config_message));
 
-  auto* buffer   = static_cast<char const*>(nullptr);
+  auto* buffer = static_cast<char const*>(nullptr);
   auto byte_size = std::size_t{};
-  triton_check(TRITONSERVER_MessageSerializeToJson(config_message, &buffer, &byte_size));
+  triton_check(
+      TRITONSERVER_MessageSerializeToJson(config_message, &buffer, &byte_size));
 
   auto model_config = std::make_unique<common::TritonJson::Value>();
-  auto* err         = model_config->Parse(buffer, byte_size);
-  auto* result      = TRITONSERVER_MessageDelete(config_message);
-  if (err != nullptr) { throw(TritonException(err)); }
-  if (result != nullptr) { throw(TritonException(result)); }
+  auto* err = model_config->Parse(buffer, byte_size);
+  auto* result = TRITONSERVER_MessageDelete(config_message);
+  if (err != nullptr) {
+    throw(TritonException(err));
+  }
+  if (result != nullptr) {
+    throw(TritonException(result));
+  }
   return model_config;
 }
 
@@ -68,14 +75,18 @@ inline auto get_model_config(TRITONBACKEND_Model& model)
  * SharedModelState and provide additional interface compatibility.
  */
 template <typename ModelStateType>
-void set_model_state(TRITONBACKEND_Model& model, std::unique_ptr<ModelStateType>&& model_state)
+void
+set_model_state(
+    TRITONBACKEND_Model& model, std::unique_ptr<ModelStateType>&& model_state)
 {
-  triton_check(TRITONBACKEND_ModelSetState(&model, reinterpret_cast<void*>(model_state.release())));
+  triton_check(TRITONBACKEND_ModelSetState(
+      &model, reinterpret_cast<void*>(model_state.release())));
 }
 
 /** Given a model, return its associated ModelState object */
 template <typename ModelStateType>
-auto* get_model_state(TRITONBACKEND_Model& model)
+auto*
+get_model_state(TRITONBACKEND_Model& model)
 {
   auto* vstate = static_cast<void*>(nullptr);
   triton_check(TRITONBACKEND_ModelState(&model, &vstate));
@@ -85,6 +96,4 @@ auto* get_model_state(TRITONBACKEND_Model& model)
   return model_state;
 }
 
-}  // namespace rapids
-}  // namespace backend
-}  // namespace triton
+}}}  // namespace triton::backend::rapids

@@ -18,11 +18,10 @@
 
 #include <rapids_triton.hpp>
 
-namespace triton {
-namespace backend {
-namespace rapids {
+namespace triton { namespace backend { namespace rapids {
 
-TEST(RapidsTriton, installed) { std::cout << test_install() << "\n"; }
-}  // namespace rapids
-}  // namespace backend
-}  // namespace triton
+TEST(RapidsTriton, installed)
+{
+  std::cout << test_install() << "\n";
+}
+}}}  // namespace triton::backend::rapids

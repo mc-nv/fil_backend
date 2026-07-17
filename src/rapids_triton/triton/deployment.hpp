@@ -17,15 +17,11 @@
 #pragma once
 #include <triton/core/tritonserver.h>
 
-namespace triton {
-namespace backend {
-namespace rapids {
-using DeploymentType         = TRITONSERVER_InstanceGroupKind;
+namespace triton { namespace backend { namespace rapids {
+using DeploymentType = TRITONSERVER_InstanceGroupKind;
 auto constexpr GPUDeployment = TRITONSERVER_INSTANCEGROUPKIND_GPU;
 auto constexpr CPUDeployment = TRITONSERVER_INSTANCEGROUPKIND_CPU;
 // Note (wphicks): We currently are not including "Auto" or "Model" because I
 // am not sure exactly how those would be used in context. If there is a
 // demand, they can be added.
-}  // namespace rapids
-}  // namespace backend
-}  // namespace triton
+}}}  // namespace triton::backend::rapids

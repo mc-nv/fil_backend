@@ -16,6 +16,7 @@
 
 #ifdef TRITON_ENABLE_GPU
 #include <cuda_runtime_api.h>
+
 #include <rapids_triton/memory/detail/gpu_only/copy.hpp>
 #else
 #include <rapids_triton/memory/detail/cpu_only/copy.hpp>
@@ -27,39 +28,41 @@
 #include <rapids_triton/memory/types.hpp>
 #include <vector>
 
-namespace triton {
-namespace backend {
-namespace rapids {
+namespace triton { namespace backend { namespace rapids {
 TEST(RapidsTriton, copy)
 {
-  auto data     = std::vector<int>{1, 2, 3};
+  auto data = std::vector<int>{1, 2, 3};
   auto data_out = std::vector<int>(data.size());
-  detail::copy(data_out.data(), data.data(), data.size(), 0, HostMemory, HostMemory);
+  detail::copy(
+      data_out.data(), data.data(), data.size(), 0, HostMemory, HostMemory);
   EXPECT_THAT(data_out, ::testing::ElementsAreArray(data));
 
   data_out = std::vector<int>(data.size());
 #ifdef TRITON_ENABLE_GPU
   auto* ptr_d = static_cast<int*>(nullptr);
-  cuda_check(cudaMalloc(reinterpret_cast<void**>(&ptr_d), sizeof(int) * data.size()));
+  cuda_check(
+      cudaMalloc(reinterpret_cast<void**>(&ptr_d), sizeof(int) * data.size()));
   detail::copy(ptr_d, data.data(), data.size(), 0, DeviceMemory, HostMemory);
   cuda_check(cudaDeviceSynchronize());
 
-  cuda_check(
-        cudaMemcpy(static_cast<void*>(data_out.data()),
-             static_cast<void*>(ptr_d),
-             sizeof(int) * data.size(),
-             cudaMemcpyDeviceToHost));
+  cuda_check(cudaMemcpy(
+      static_cast<void*>(data_out.data()), static_cast<void*>(ptr_d),
+      sizeof(int) * data.size(), cudaMemcpyDeviceToHost));
   cuda_check(cudaDeviceSynchronize());
   EXPECT_THAT(data_out, ::testing::ElementsAreArray(data));
   cudaFree(reinterpret_cast<void*>(ptr_d));
 #else
-  EXPECT_THROW(detail::copy(data_out.data(), data.data(), data.size(), 0, HostMemory, DeviceMemory),
-               TritonException);
-  EXPECT_THROW(detail::copy(data_out.data(), data.data(), data.size(), 0, DeviceMemory, HostMemory),
-               TritonException);
+  EXPECT_THROW(
+      detail::copy(
+          data_out.data(), data.data(), data.size(), 0, HostMemory,
+          DeviceMemory),
+      TritonException);
+  EXPECT_THROW(
+      detail::copy(
+          data_out.data(), data.data(), data.size(), 0, DeviceMemory,
+          HostMemory),
+      TritonException);
 #endif
 }
 
-}  // namespace rapids
-}  // namespace backend
-}  // namespace triton
+}}}  // namespace triton::backend::rapids

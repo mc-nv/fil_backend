@@ -16,43 +16,48 @@
 
 #pragma once
 #include <triton/core/tritonbackend.h>
+
 #include <algorithm>
 #include <iterator>
 #include <rapids_triton/exceptions.hpp>
 #include <rapids_triton/triton/logging.hpp>
 #include <vector>
 
-namespace triton {
-namespace backend {
-namespace rapids {
+namespace triton { namespace backend { namespace rapids {
 
 template <typename Iter>
-auto construct_responses(Iter requests_begin, Iter requests_end)
+auto
+construct_responses(Iter requests_begin, Iter requests_end)
 {
   auto responses = std::vector<TRITONBACKEND_Response*>{};
 
   auto requests_size = std::distance(requests_begin, requests_end);
   if (!(requests_size > 0)) {
-    throw TritonException(Error::Internal,
-                          "Invalid iterators for requests when constructing responses");
+    throw TritonException(
+        Error::Internal,
+        "Invalid iterators for requests when constructing responses");
   }
   responses.reserve(requests_size);
 
-  std::transform(requests_begin, requests_end, std::back_inserter(responses), [](auto* request) {
-    auto* response = static_cast<TRITONBACKEND_Response*>(nullptr);
-    triton_check(TRITONBACKEND_ResponseNew(&response, request));
-    return response;
-  });
+  std::transform(
+      requests_begin, requests_end, std::back_inserter(responses),
+      [](auto* request) {
+        auto* response = static_cast<TRITONBACKEND_Response*>(nullptr);
+        triton_check(TRITONBACKEND_ResponseNew(&response, request));
+        return response;
+      });
   return responses;
 }
 
 template <typename Iter>
-void send_responses(Iter begin, Iter end, TRITONSERVER_Error* err)
+void
+send_responses(Iter begin, Iter end, TRITONSERVER_Error* err)
 {
   std::for_each(begin, end, [err](auto& response) {
     decltype(err) err_copy;
     if (err != nullptr) {
-      err_copy = TRITONSERVER_ErrorNew(TRITONSERVER_ErrorCode(err), TRITONSERVER_ErrorMessage(err));
+      err_copy = TRITONSERVER_ErrorNew(
+          TRITONSERVER_ErrorCode(err), TRITONSERVER_ErrorMessage(err));
     } else {
       err_copy = err;
     }
@@ -61,15 +66,14 @@ void send_responses(Iter begin, Iter end, TRITONSERVER_Error* err)
       log_error(__FILE__, __LINE__) << "Failure in response collation";
     } else {
       try {
-        triton_check(
-          TRITONBACKEND_ResponseSend(response, TRITONSERVER_RESPONSE_COMPLETE_FINAL, err_copy));
-      } catch (TritonException& err) {
+        triton_check(TRITONBACKEND_ResponseSend(
+            response, TRITONSERVER_RESPONSE_COMPLETE_FINAL, err_copy));
+      }
+      catch (TritonException& err) {
         log_error(__FILE__, __LINE__, err.what());
       }
     }
   });
 }
 
-}  // namespace rapids
-}  // namespace backend
-}  // namespace triton
+}}}  // namespace triton::backend::rapids

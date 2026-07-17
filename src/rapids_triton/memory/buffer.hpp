@@ -22,6 +22,7 @@
 
 #ifdef TRITON_ENABLE_GPU
 #include <cuda_runtime_api.h>
+
 #include <rapids_triton/memory/detail/gpu_only/copy.hpp>
 #include <rapids_triton/memory/detail/gpu_only/owned_device_buffer.hpp>
 #else
@@ -37,21 +38,23 @@
 #include <rapids_triton/triton/device.hpp>
 #include <rapids_triton/triton/logging.hpp>
 
-namespace triton {
-namespace backend {
-namespace rapids {
+namespace triton { namespace backend { namespace rapids {
 template <typename T>
 struct Buffer {
-  using size_type  = std::size_t;
+  using size_type = std::size_t;
   using value_type = T;
 
-  using h_buffer       = T*;
-  using d_buffer       = T*;
+  using h_buffer = T*;
+  using d_buffer = T*;
   using owned_h_buffer = std::unique_ptr<T[]>;
   using owned_d_buffer = detail::owned_device_buffer<T, IS_GPU_BUILD>;
-  using data_store = std::variant<h_buffer, d_buffer, owned_h_buffer, owned_d_buffer>;
+  using data_store =
+      std::variant<h_buffer, d_buffer, owned_h_buffer, owned_d_buffer>;
 
-  Buffer() noexcept : device_{}, data_{std::in_place_index<0>, nullptr}, size_{}, stream_{} {}
+  Buffer() noexcept
+      : device_{}, data_{std::in_place_index<0>, nullptr}, size_{}, stream_{}
+  {
+  }
 
   /**
    * @brief Construct buffer of given size in given memory location (either
@@ -59,21 +62,16 @@ struct Buffer {
    * A buffer constructed in this way is owning and will release allocated
    * resources on deletion
    */
-  Buffer(size_type size,
-         MemoryType memory_type = DeviceMemory,
-         device_id_t device     = 0,
-         cudaStream_t stream    = 0)
-    : device_{device},
-      data_{allocate(size, device, memory_type, stream)},
-      size_{size},
-      stream_{stream}
+  Buffer(
+      size_type size, MemoryType memory_type = DeviceMemory,
+      device_id_t device = 0, cudaStream_t stream = 0)
+      : device_{device}, data_{allocate(size, device, memory_type, stream)},
+        size_{size}, stream_{stream}
   {
     if constexpr (!IS_GPU_BUILD) {
       if (memory_type == DeviceMemory) {
         throw TritonException(
-          Error::Internal,
-          "Cannot use device buffer in non-GPU build"
-        );
+            Error::Internal, "Cannot use device buffer in non-GPU build");
       }
     }
   }
@@ -84,29 +82,23 @@ struct Buffer {
    * A buffer constructed in this way is non-owning; the caller is
    * responsible for freeing any resources associated with the input pointer
    */
-  Buffer(T* input_data,
-         size_type size,
-         MemoryType memory_type = DeviceMemory,
-         device_id_t device     = 0,
-         cudaStream_t stream    = 0)
-    : device_{device},
-      data_{[&memory_type, &input_data]() {
-        auto result = data_store{};
-        if (memory_type == HostMemory) {
-          result = data_store{std::in_place_index<0>, input_data};
-        } else {
-          if constexpr (!IS_GPU_BUILD) {
-            throw TritonException(
-              Error::Internal,
-              "Cannot use device buffer in non-GPU build"
-            );
+  Buffer(
+      T* input_data, size_type size, MemoryType memory_type = DeviceMemory,
+      device_id_t device = 0, cudaStream_t stream = 0)
+      : device_{device}, data_{[&memory_type, &input_data]() {
+          auto result = data_store{};
+          if (memory_type == HostMemory) {
+            result = data_store{std::in_place_index<0>, input_data};
+          } else {
+            if constexpr (!IS_GPU_BUILD) {
+              throw TritonException(
+                  Error::Internal, "Cannot use device buffer in non-GPU build");
+            }
+            result = data_store{std::in_place_index<1>, input_data};
           }
-          result = data_store{std::in_place_index<1>, input_data};
-        }
-        return result;
-      }()},
-      size_{size},
-      stream_{stream}
+          return result;
+        }()},
+        size_{size}, stream_{stream}
   {
   }
 
@@ -117,14 +109,13 @@ struct Buffer {
    * the original location
    */
   Buffer(Buffer<T> const& other, MemoryType memory_type, device_id_t device = 0)
-    : device_{device},
-      data_([&other, &memory_type, &device]() {
-        auto result = allocate(other.size_, device, memory_type, other.stream_);
-        copy(result, other.data_, other.size_, other.stream_);
-        return result;
-      }()),
-      size_{other.size_},
-      stream_{other.stream_}
+      : device_{device}, data_([&other, &memory_type, &device]() {
+          auto result =
+              allocate(other.size_, device, memory_type, other.stream_);
+          copy(result, other.data_, other.size_, other.stream_);
+          return result;
+        }()),
+        size_{other.size_}, stream_{other.stream_}
   {
   }
 
@@ -132,22 +123,24 @@ struct Buffer {
    * @brief Create owning copy of existing buffer
    * The memory type of this new buffer will be the same as the original
    */
-  Buffer(Buffer<T> const& other) : Buffer(other, other.mem_type(), other.device()) {}
+  Buffer(Buffer<T> const& other)
+      : Buffer(other, other.mem_type(), other.device())
+  {
+  }
 
   Buffer(Buffer<T>&& other, MemoryType memory_type)
-    : device_{other.device()},
-      data_{[&other, memory_type]() {
-        data_store result;
-        if (memory_type == other.mem_type()) {
-          result = std::move(other.data_);
-        } else {
-          result = allocate(other.size_, memory_type, other.device(), other.stream());
-          copy(result, other.data_, other.size_, other.stream_);
-        }
-        return result;
-      }()},
-      size_{other.size_},
-      stream_{other.stream_}
+      : device_{other.device()}, data_{[&other, memory_type]() {
+          data_store result;
+          if (memory_type == other.mem_type()) {
+            result = std::move(other.data_);
+          } else {
+            result = allocate(
+                other.size_, memory_type, other.device(), other.stream());
+            copy(result, other.data_, other.size_, other.stream_);
+          }
+          return result;
+        }()},
+        size_{other.size_}, stream_{other.stream_}
   {
   }
 
@@ -160,7 +153,10 @@ struct Buffer {
   /**
    * @brief Return where memory for this buffer is located (host or device)
    */
-  auto mem_type() const noexcept { return data_.index() % 2 == 0 ? HostMemory : DeviceMemory; }
+  auto mem_type() const noexcept
+  {
+    return data_.index() % 2 == 0 ? HostMemory : DeviceMemory;
+  }
 
   /**
    * @brief Return number of elements in buffer
@@ -181,7 +177,9 @@ struct Buffer {
 
   void stream_synchronize() const
   {
-    if constexpr (IS_GPU_BUILD) { cuda_check(cudaStreamSynchronize(stream_)); }
+    if constexpr (IS_GPU_BUILD) {
+      cuda_check(cudaStreamSynchronize(stream_));
+    }
   }
 
   /**
@@ -211,31 +209,39 @@ struct Buffer {
      * vtable overhead for a small number of alternatives */
     auto* result = static_cast<T*>(nullptr);
     switch (ptr.index()) {
-      case 0: result = std::get<0>(ptr); break;
-      case 1: result = std::get<1>(ptr); break;
-      case 2: result = std::get<2>(ptr).get(); break;
-      case 3: result = std::get<3>(ptr).get(); break;
+      case 0:
+        result = std::get<0>(ptr);
+        break;
+      case 1:
+        result = std::get<1>(ptr);
+        break;
+      case 2:
+        result = std::get<2>(ptr).get();
+        break;
+      case 3:
+        result = std::get<3>(ptr).get();
+        break;
     }
     return result;
   }
 
   // Helper function for allocating memory in constructors
-  static auto allocate(size_type size,
-                       device_id_t device     = 0,
-                       MemoryType memory_type = DeviceMemory,
-                       cudaStream_t stream    = 0)
+  static auto allocate(
+      size_type size, device_id_t device = 0,
+      MemoryType memory_type = DeviceMemory, cudaStream_t stream = 0)
   {
     auto result = data_store{};
     if (memory_type == DeviceMemory) {
       if constexpr (IS_GPU_BUILD) {
         result = data_store{owned_d_buffer{
-          device,
-          size,
-          stream,
+            device,
+            size,
+            stream,
         }};
       } else {
-        throw TritonException(Error::Internal,
-                              "DeviceMemory requested in CPU-only build of FIL backend");
+        throw TritonException(
+            Error::Internal,
+            "DeviceMemory requested in CPU-only build of FIL backend");
       }
     } else {
       result = std::make_unique<T[]>(size);
@@ -246,7 +252,9 @@ struct Buffer {
   // Helper function for copying memory in constructors, where there are
   // stronger guarantees on conditions that would otherwise need to be
   // checked
-  static void copy(data_store const& dst, data_store const& src, size_type len, cudaStream_t stream)
+  static void copy(
+      data_store const& dst, data_store const& src, size_type len,
+      cudaStream_t stream)
   {
     // This function will only be called in constructors, so we allow a
     // const_cast here to perform the initial copy of data from a
@@ -274,13 +282,16 @@ struct Buffer {
  * before which to end copying from.
  */
 template <typename T, typename U>
-void copy(Buffer<T>& dst,
-          Buffer<U> const& src,
-          typename Buffer<T>::size_type dst_begin,
-          typename Buffer<U>::size_type src_begin,
-          typename Buffer<U>::size_type src_end)
+void
+copy(
+    Buffer<T>& dst, Buffer<U> const& src,
+    typename Buffer<T>::size_type dst_begin,
+    typename Buffer<U>::size_type src_begin,
+    typename Buffer<U>::size_type src_end)
 {
-  if (dst.stream() != src.stream()) { dst.set_stream(src.stream()); }
+  if (dst.stream() != src.stream()) {
+    dst.set_stream(src.stream());
+  }
   auto len = src_end - src_begin;
   if (len < 0 || src_end > src.size() || len > dst.size() - dst_begin) {
     throw TritonException(Error::Internal, "bad copy between buffers");
@@ -289,29 +300,33 @@ void copy(Buffer<T>& dst,
   auto raw_dst = dst.data() + dst_begin;
   auto raw_src = src.data() + src_begin;
 
-  detail::copy(raw_dst, raw_src, len, dst.stream(), dst.mem_type(), src.mem_type());
+  detail::copy(
+      raw_dst, raw_src, len, dst.stream(), dst.mem_type(), src.mem_type());
 }
 
 template <typename T, typename U>
-void copy(Buffer<T>& dst, Buffer<U> const& src)
+void
+copy(Buffer<T>& dst, Buffer<U> const& src)
 {
   copy(dst, src, 0, 0, src.size());
 }
 
 template <typename T, typename U>
-void copy(Buffer<T>& dst, Buffer<U> const& src, typename Buffer<T>::size_type dst_begin)
+void
+copy(
+    Buffer<T>& dst, Buffer<U> const& src,
+    typename Buffer<T>::size_type dst_begin)
 {
   copy(dst, src, dst_begin, 0, src.size());
 }
 
 template <typename T, typename U>
-void copy(Buffer<T>& dst,
-          Buffer<U> const& src,
-          typename Buffer<U>::size_type src_begin,
-          typename Buffer<U>::size_type src_end)
+void
+copy(
+    Buffer<T>& dst, Buffer<U> const& src,
+    typename Buffer<U>::size_type src_begin,
+    typename Buffer<U>::size_type src_end)
 {
   copy(dst, src, 0, src_begin, src_end);
 }
-}  // namespace rapids
-}  // namespace backend
-}  // namespace triton
+}}}  // namespace triton::backend::rapids

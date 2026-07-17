@@ -18,14 +18,15 @@
 #include <rapids_triton/exceptions.hpp>
 #include <type_traits>
 
-namespace triton {
-namespace backend {
-namespace rapids {
+namespace triton { namespace backend { namespace rapids {
 
 template <typename T>
-T safe_multiply(T a, T b) {
-  static_assert(std::is_unsigned_v<T> && std::is_integral_v<T>,
-                "safe_multiply only defined for unsigned integers");
+T
+safe_multiply(T a, T b)
+{
+  static_assert(
+      std::is_unsigned_v<T> && std::is_integral_v<T>,
+      "safe_multiply only defined for unsigned integers");
   T result = a * b;
   if (a != 0 && result / a != b) {
     throw TritonException(Error::Internal, "Overflow detected in multiply");
@@ -33,6 +34,4 @@ T safe_multiply(T a, T b) {
   return result;
 }
 
-}  // namespace rapids
-}  // namespace backend
-}  // namespace triton
+}}}  // namespace triton::backend::rapids

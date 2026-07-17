@@ -16,19 +16,19 @@
 
 #pragma once
 #include <triton/core/tritonserver.h>
-#include <rapids_triton/exceptions.hpp>
 
 #include <ostream>
+#include <rapids_triton/exceptions.hpp>
 #include <sstream>
 #include <string>
 
-namespace triton {
-namespace backend {
-namespace rapids {
+namespace triton { namespace backend { namespace rapids {
 
 namespace {
 /** Log message at indicated level */
-inline void log(TRITONSERVER_LogLevel level, char const* filename, int line, char const* message)
+inline void
+log(TRITONSERVER_LogLevel level, char const* filename, int line,
+    char const* message)
 {
   triton_check(TRITONSERVER_LogMessage(level, filename, line, message));
 }
@@ -36,11 +36,12 @@ inline void log(TRITONSERVER_LogLevel level, char const* filename, int line, cha
 
 struct log_stream : public std::ostream {
   log_stream(TRITONSERVER_LogLevel level, char const* filename, int line)
-    : std::ostream{}, buffer_{level, filename, line}
+      : std::ostream{}, buffer_{level, filename, line}
   {
     rdbuf(&buffer_);
   }
-  log_stream(TRITONSERVER_LogLevel level) : std::ostream{}, buffer_{level, __FILE__, __LINE__}
+  log_stream(TRITONSERVER_LogLevel level)
+      : std::ostream{}, buffer_{level, __FILE__, __LINE__}
   {
     rdbuf(&buffer_);
   }
@@ -49,7 +50,8 @@ struct log_stream : public std::ostream {
   {
     try {
       flush();
-    } catch (std::ios_base::failure const& ignored_err) {
+    }
+    catch (std::ios_base::failure const& ignored_err) {
       // Ignore error if flush fails
     }
   }
@@ -57,7 +59,7 @@ struct log_stream : public std::ostream {
  private:
   struct log_buffer : public std::stringbuf {
     log_buffer(TRITONSERVER_LogLevel level, char const* filename, int line)
-      : level_{level}, filename_{filename}, line_{line}
+        : level_{level}, filename_{filename}, line_{line}
     {
     }
 
@@ -81,79 +83,131 @@ struct log_stream : public std::ostream {
 };
 
 /** Log message at INFO level */
-inline void log_info(char const* filename, int line, char const* message)
+inline void
+log_info(char const* filename, int line, char const* message)
 {
   log(TRITONSERVER_LOG_INFO, filename, line, message);
 }
-inline void log_info(char const* filename, int line, std::string const& message)
+inline void
+log_info(char const* filename, int line, std::string const& message)
 {
   log_info(filename, line, message.c_str());
 }
-inline void log_info(char const* message) { log_info(__FILE__, __LINE__, message); }
-inline void log_info(std::string const& message) { log_info(__FILE__, __LINE__, message.c_str()); }
-inline auto log_info(char const* filename, int line)
+inline void
+log_info(char const* message)
+{
+  log_info(__FILE__, __LINE__, message);
+}
+inline void
+log_info(std::string const& message)
+{
+  log_info(__FILE__, __LINE__, message.c_str());
+}
+inline auto
+log_info(char const* filename, int line)
 {
   return log_stream(TRITONSERVER_LOG_INFO, filename, line);
 }
-inline auto log_info() { return log_stream(TRITONSERVER_LOG_INFO); }
+inline auto
+log_info()
+{
+  return log_stream(TRITONSERVER_LOG_INFO);
+}
 
 /** Log message at WARN level */
-inline void log_warn(char const* filename, int line, char const* message)
+inline void
+log_warn(char const* filename, int line, char const* message)
 {
   log(TRITONSERVER_LOG_WARN, filename, line, message);
 }
-inline void log_warn(char const* filename, int line, std::string const& message)
+inline void
+log_warn(char const* filename, int line, std::string const& message)
 {
   log_warn(filename, line, message.c_str());
 }
-inline void log_warn(char const* message) { log_warn(__FILE__, __LINE__, message); }
-inline void log_warn(std::string const& message) { log_warn(__FILE__, __LINE__, message.c_str()); }
-inline auto log_warn(char const* filename, int line)
+inline void
+log_warn(char const* message)
+{
+  log_warn(__FILE__, __LINE__, message);
+}
+inline void
+log_warn(std::string const& message)
+{
+  log_warn(__FILE__, __LINE__, message.c_str());
+}
+inline auto
+log_warn(char const* filename, int line)
 {
   return log_stream(TRITONSERVER_LOG_WARN, filename, line);
 }
-inline auto log_warn() { return log_stream(TRITONSERVER_LOG_WARN); }
+inline auto
+log_warn()
+{
+  return log_stream(TRITONSERVER_LOG_WARN);
+}
 
 /** Log message at ERROR level */
-inline void log_error(char const* filename, int line, char const* message)
+inline void
+log_error(char const* filename, int line, char const* message)
 {
   log(TRITONSERVER_LOG_ERROR, filename, line, message);
 }
-inline void log_error(char const* filename, int line, std::string const& message)
+inline void
+log_error(char const* filename, int line, std::string const& message)
 {
   log_error(filename, line, message.c_str());
 }
-inline void log_error(char const* message) { log_error(__FILE__, __LINE__, message); }
-inline void log_error(std::string const& message)
+inline void
+log_error(char const* message)
+{
+  log_error(__FILE__, __LINE__, message);
+}
+inline void
+log_error(std::string const& message)
 {
   log_error(__FILE__, __LINE__, message.c_str());
 }
-inline auto log_error(char const* filename, int line)
+inline auto
+log_error(char const* filename, int line)
 {
   return log_stream(TRITONSERVER_LOG_ERROR, filename, line);
 }
-inline auto log_error() { return log_stream(TRITONSERVER_LOG_ERROR); }
+inline auto
+log_error()
+{
+  return log_stream(TRITONSERVER_LOG_ERROR);
+}
 
 /** Log message at VERBOSE level */
-inline void log_debug(char const* filename, int line, char const* message)
+inline void
+log_debug(char const* filename, int line, char const* message)
 {
   log(TRITONSERVER_LOG_VERBOSE, filename, line, message);
 }
-inline void log_debug(char const* filename, int line, std::string const& message)
+inline void
+log_debug(char const* filename, int line, std::string const& message)
 {
   log_debug(filename, line, message.c_str());
 }
-inline void log_debug(char const* message) { log_debug(__FILE__, __LINE__, message); }
-inline void log_debug(std::string const& message)
+inline void
+log_debug(char const* message)
+{
+  log_debug(__FILE__, __LINE__, message);
+}
+inline void
+log_debug(std::string const& message)
 {
   log_debug(__FILE__, __LINE__, message.c_str());
 }
-inline auto log_debug(char const* filename, int line)
+inline auto
+log_debug(char const* filename, int line)
 {
   return log_stream(TRITONSERVER_LOG_VERBOSE, filename, line);
 }
-inline auto log_debug() { return log_stream(TRITONSERVER_LOG_VERBOSE); }
+inline auto
+log_debug()
+{
+  return log_stream(TRITONSERVER_LOG_VERBOSE);
+}
 
-}  // namespace rapids
-}  // namespace backend
-}  // namespace triton
+}}}  // namespace triton::backend::rapids

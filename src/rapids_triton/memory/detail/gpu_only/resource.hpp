@@ -16,6 +16,7 @@
 
 #pragma once
 #include <triton/core/tritonbackend.h>
+
 #include <deque>
 #include <memory>
 #include <mutex>
@@ -27,12 +28,10 @@
 #include <rmm/mr/cuda_memory_resource.hpp>
 #include <rmm/mr/per_device_resource.hpp>
 
-namespace triton {
-namespace backend {
-namespace rapids {
-namespace detail {
+namespace triton { namespace backend { namespace rapids { namespace detail {
 
-inline auto& resource_lock()
+inline auto&
+resource_lock()
 {
   static auto lock = std::mutex{};
   return lock;
@@ -43,14 +42,15 @@ inline auto& resource_lock()
 struct resource_data {
   resource_data() : base_mr_{}, triton_mrs_{} {}
 
-  cuda::mr::any_resource<cuda::mr::device_accessible>
-  make_new_resource(device_id_t device_id, TRITONBACKEND_MemoryManager* manager)
+  cuda::mr::any_resource<cuda::mr::device_accessible> make_new_resource(
+      device_id_t device_id, TRITONBACKEND_MemoryManager* manager)
   {
     if (manager == nullptr && triton_mrs_.size() != 0) {
       manager = triton_mrs_.back().get_triton_manager();
     }
     triton_mrs_.emplace_back(manager, device_id, base_mr_);
-    return cuda::mr::any_resource<cuda::mr::device_accessible>(triton_mrs_.back());
+    return cuda::mr::any_resource<cuda::mr::device_accessible>(
+        triton_mrs_.back());
   }
 
  private:
@@ -58,34 +58,35 @@ struct resource_data {
   std::deque<triton_memory_resource> triton_mrs_;
 };
 
-inline auto& get_device_resources()
+inline auto&
+get_device_resources()
 {
   static auto device_resources = resource_data{};
   return device_resources;
 }
 
-inline auto is_triton_resource(rmm::cuda_device_id const& device_id)
+inline auto
+is_triton_resource(rmm::cuda_device_id const& device_id)
 {
   auto ref = rmm::mr::get_per_device_resource_ref(device_id);
   auto* triton_mr = cuda::mr::resource_cast<triton_memory_resource>(&ref);
   return (triton_mr != nullptr && triton_mr->get_triton_manager() != nullptr);
 }
 
-template<>
-inline void setup_memory_resource<true>(device_id_t device_id,
-                                   TRITONBACKEND_MemoryManager* triton_manager)
+template <>
+inline void
+setup_memory_resource<true>(
+    device_id_t device_id, TRITONBACKEND_MemoryManager* triton_manager)
 {
-  auto lock          = std::lock_guard<std::mutex>{detail::resource_lock()};
+  auto lock = std::lock_guard<std::mutex>{detail::resource_lock()};
   auto rmm_device_id = rmm::cuda_device_id{device_id};
 
   if (!detail::is_triton_resource(rmm_device_id)) {
     auto& device_resources = detail::get_device_resources();
-    rmm::mr::set_per_device_resource(rmm_device_id,
-				     device_resources.make_new_resource(device_id, triton_manager));
+    rmm::mr::set_per_device_resource(
+        rmm_device_id,
+        device_resources.make_new_resource(device_id, triton_manager));
   }
 }
 
-}  // namespace detail
-}  // namespace rapids
-}  // namespace backend
-}  // namespace triton
+}}}}  // namespace triton::backend::rapids::detail

@@ -18,9 +18,7 @@
 
 #include <rapids_triton/build_control.hpp>
 
-namespace triton {
-namespace backend {
-namespace rapids {
+namespace triton { namespace backend { namespace rapids {
 
 TEST(RapidsTriton, build_control)
 {
@@ -30,6 +28,4 @@ TEST(RapidsTriton, build_control)
   ASSERT_EQ(IS_GPU_BUILD, false) << "IS_GPU_BUILD constant has wrong value\n";
 #endif
 }
-}  // namespace rapids
-}  // namespace backend
-}  // namespace triton
+}}}  // namespace triton::backend::rapids

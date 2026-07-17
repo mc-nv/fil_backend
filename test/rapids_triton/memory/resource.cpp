@@ -16,6 +16,7 @@
 
 #ifdef TRITON_ENABLE_GPU
 #include <cuda_runtime_api.h>
+
 #include <rmm/cuda_device.hpp>
 #include <rmm/mr/cuda_memory_resource.hpp>
 #include <rmm/mr/per_device_resource.hpp>
@@ -28,23 +29,23 @@
 #include <rapids_triton/exceptions.hpp>
 #include <rapids_triton/memory/resource.hpp>
 
-namespace triton {
-namespace backend {
-namespace rapids {
+namespace triton { namespace backend { namespace rapids {
 
 TEST(RapidsTriton, set_memory_resource)
 {
 #ifdef TRITON_ENABLE_GPU
   auto device_id = int{};
   cuda_check(cudaGetDevice(&device_id));
-  EXPECT_TRUE(rmm::mr::get_current_device_resource_ref() == rmm::mr::cuda_memory_resource{});
+  EXPECT_TRUE(
+      rmm::mr::get_current_device_resource_ref() ==
+      rmm::mr::cuda_memory_resource{});
   setup_memory_resource(device_id);
-  EXPECT_TRUE(rmm::mr::get_current_device_resource_ref() != rmm::mr::cuda_memory_resource{});
+  EXPECT_TRUE(
+      rmm::mr::get_current_device_resource_ref() !=
+      rmm::mr::cuda_memory_resource{});
 #else
   setup_memory_resource(0);
 #endif
 }
 
-}  // namespace rapids
-}  // namespace backend
-}  // namespace triton
+}}}  // namespace triton::backend::rapids

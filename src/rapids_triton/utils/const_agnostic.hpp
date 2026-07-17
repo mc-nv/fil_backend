@@ -17,14 +17,10 @@
 #pragma once
 #include <type_traits>
 
-namespace triton {
-namespace backend {
-namespace rapids {
+namespace triton { namespace backend { namespace rapids {
 
 template <typename T, typename U>
-using const_agnostic_same_t =
-  std::enable_if_t<std::is_same_v<std::remove_const_t<T>, std::remove_const_t<U>>>;
+using const_agnostic_same_t = std::enable_if_t<
+    std::is_same_v<std::remove_const_t<T>, std::remove_const_t<U>>>;
 
-}
-}  // namespace backend
-}  // namespace triton
+}}}  // namespace triton::backend::rapids

@@ -16,6 +16,7 @@
 
 #ifdef TRITON_ENABLE_GPU
 #include <cuda_runtime_api.h>
+
 #include <rapids_triton/memory/detail/gpu_only/owned_device_buffer.hpp>
 #else
 #include <rapids_triton/memory/detail/cpu_only/owned_device_buffer.hpp>
@@ -27,9 +28,7 @@
 #include <rapids_triton/exceptions.hpp>
 #include <vector>
 
-namespace triton {
-namespace backend {
-namespace rapids {
+namespace triton { namespace backend { namespace rapids {
 TEST(RapidsTriton, owned_device_buffer)
 {
   auto data = std::vector<int>{1, 2, 3};
@@ -39,16 +38,15 @@ TEST(RapidsTriton, owned_device_buffer)
   auto stream = cudaStream_t{};
   cudaStreamCreate(&stream);
 
-  auto buffer   = detail::owned_device_buffer<int, IS_GPU_BUILD>(device_id, data.size(), stream);
+  auto buffer = detail::owned_device_buffer<int, IS_GPU_BUILD>(
+      device_id, data.size(), stream);
   auto data_out = std::vector<int>(data.size());
-  cudaMemcpy(static_cast<void*>(buffer.get()),
-             static_cast<void*>(data.data()),
-             sizeof(int) * data.size(),
-             cudaMemcpyHostToDevice);
-  cudaMemcpy(static_cast<void*>(data_out.data()),
-             static_cast<void*>(buffer.get()),
-             sizeof(int) * data.size(),
-             cudaMemcpyDeviceToHost);
+  cudaMemcpy(
+      static_cast<void*>(buffer.get()), static_cast<void*>(data.data()),
+      sizeof(int) * data.size(), cudaMemcpyHostToDevice);
+  cudaMemcpy(
+      static_cast<void*>(data_out.data()), static_cast<void*>(buffer.get()),
+      sizeof(int) * data.size(), cudaMemcpyDeviceToHost);
   EXPECT_THAT(data_out, ::testing::ElementsAreArray(data));
   cudaStreamDestroy(stream);
 #else
@@ -59,6 +57,4 @@ TEST(RapidsTriton, owned_device_buffer)
 #endif
 }
 
-}  // namespace rapids
-}  // namespace backend
-}  // namespace triton
+}}}  // namespace triton::backend::rapids

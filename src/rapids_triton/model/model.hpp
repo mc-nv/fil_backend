@@ -31,9 +31,7 @@
 #include <string>
 #include <vector>
 
-namespace triton {
-namespace backend {
-namespace rapids {
+namespace triton { namespace backend { namespace rapids {
 template <typename SharedState = SharedModelState>
 struct Model {
   virtual void predict(Batch& batch) const = 0;
@@ -55,7 +53,8 @@ struct Model {
    */
   virtual std::optional<MemoryType> preferred_mem_type(Batch& batch) const
   {
-    return (IS_GPU_BUILD && deployment_type_ == GPUDeployment) ? DeviceMemory : HostMemory;
+    return (IS_GPU_BUILD && deployment_type_ == GPUDeployment) ? DeviceMemory
+                                                               : HostMemory;
   }
   virtual std::optional<MemoryType> preferred_mem_type_in(Batch& batch) const
   {
@@ -82,57 +81,56 @@ struct Model {
    * @brief Get input tensor of a particular named input for an entire batch
    */
   template <typename T>
-  auto get_input(Batch& batch,
-                 std::string const& name,
-                 std::optional<MemoryType> const& mem_type,
-                 cudaStream_t stream) const
+  auto get_input(
+      Batch& batch, std::string const& name,
+      std::optional<MemoryType> const& mem_type, cudaStream_t stream) const
   {
     return batch.get_input<T const>(name, mem_type, device_id_, stream);
   }
   template <typename T>
-  auto get_input(Batch& batch,
-                 std::string const& name,
-                 std::optional<MemoryType> const& mem_type) const
+  auto get_input(
+      Batch& batch, std::string const& name,
+      std::optional<MemoryType> const& mem_type) const
   {
     return get_input<T>(batch, name, mem_type, default_stream_);
   }
   template <typename T>
   auto get_input(Batch& batch, std::string const& name) const
   {
-    return get_input<T>(batch, name, preferred_mem_type(batch), default_stream_);
+    return get_input<T>(
+        batch, name, preferred_mem_type(batch), default_stream_);
   }
 
   /**
    * @brief Get output tensor of a particular named output for an entire batch
    */
   template <typename T>
-  auto get_output(Batch& batch,
-                  std::string const& name,
-                  std::optional<MemoryType> const& mem_type,
-                  device_id_t device_id,
-                  cudaStream_t stream) const
+  auto get_output(
+      Batch& batch, std::string const& name,
+      std::optional<MemoryType> const& mem_type, device_id_t device_id,
+      cudaStream_t stream) const
   {
     return batch.get_output<T>(name, mem_type, device_id, stream);
   }
   template <typename T>
-  auto get_output(Batch& batch,
-                  std::string const& name,
-                  std::optional<MemoryType> const& mem_type,
-                  cudaStream_t stream) const
+  auto get_output(
+      Batch& batch, std::string const& name,
+      std::optional<MemoryType> const& mem_type, cudaStream_t stream) const
   {
     return get_output<T>(batch, name, mem_type, device_id_, stream);
   }
   template <typename T>
-  auto get_output(Batch& batch,
-                  std::string const& name,
-                  std::optional<MemoryType> const& mem_type) const
+  auto get_output(
+      Batch& batch, std::string const& name,
+      std::optional<MemoryType> const& mem_type) const
   {
     return get_output<T>(batch, name, mem_type, device_id_, default_stream_);
   }
   template <typename T>
   auto get_output(Batch& batch, std::string const& name) const
   {
-    return get_output<T>(batch, name, preferred_mem_type(batch), device_id_, default_stream_);
+    return get_output<T>(
+        batch, name, preferred_mem_type(batch), device_id_, default_stream_);
   }
 
   /**
@@ -159,18 +157,17 @@ struct Model {
     return get_config_param<T>(std::string(name), default_value);
   }
 
-  Model(std::shared_ptr<SharedState> shared_state,
-        device_id_t device_id,
-        cudaStream_t default_stream,
-        DeploymentType deployment_type,
-        std::string const& filepath)
-    : shared_state_{shared_state},
-      device_id_{device_id},
-      default_stream_{default_stream},
-      deployment_type_{deployment_type},
-      filepath_{filepath}
+  Model(
+      std::shared_ptr<SharedState> shared_state, device_id_t device_id,
+      cudaStream_t default_stream, DeploymentType deployment_type,
+      std::string const& filepath)
+      : shared_state_{shared_state}, device_id_{device_id},
+        default_stream_{default_stream}, deployment_type_{deployment_type},
+        filepath_{filepath}
   {
-    if constexpr (IS_GPU_BUILD) { setup_memory_resource(device_id_); }
+    if constexpr (IS_GPU_BUILD) {
+      setup_memory_resource(device_id_);
+    }
   }
 
   auto get_device_id() const { return device_id_; }
@@ -192,6 +189,4 @@ struct Model {
   DeploymentType deployment_type_;
   std::string filepath_;
 };
-}  // namespace rapids
-}  // namespace backend
-}  // namespace triton
+}}}  // namespace triton::backend::rapids

@@ -28,8 +28,9 @@ import xgboost as xgb
 from hypothesis import HealthCheck, assume, given, settings
 from hypothesis import strategies as st
 from hypothesis.extra.numpy import arrays as st_arrays
-from rapids_triton import Client
 from rapids_triton.testing import arrays_close, get_random_seed
+
+from rapids_triton import Client
 
 TOTAL_SAMPLES = 20
 MODELS = (

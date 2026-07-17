@@ -20,16 +20,13 @@
 #include <rapids_triton/memory/detail/resource.hpp>
 #include <rapids_triton/triton/device.hpp>
 
-namespace triton {
-namespace backend {
-namespace rapids {
-namespace detail {
+namespace triton { namespace backend { namespace rapids { namespace detail {
 
-template<>
-inline void setup_memory_resource<false>(device_id_t device_id,
-                                         TRITONBACKEND_MemoryManager* triton_manager) { }
+template <>
+inline void
+setup_memory_resource<false>(
+    device_id_t device_id, TRITONBACKEND_MemoryManager* triton_manager)
+{
+}
 
-}  // namespace detail
-}  // namespace rapids
-}  // namespace backend
-}  // namespace triton
+}}}}  // namespace triton::backend::rapids::detail

@@ -16,30 +16,25 @@
 
 #pragma once
 #include <cstddef>
-#include <type_traits>
 #include <rapids_triton/cpu_only/cuda_runtime_replacement.hpp>
 #include <rapids_triton/exceptions.hpp>
 #include <rapids_triton/memory/detail/owned_device_buffer.hpp>
 #include <rapids_triton/triton/device.hpp>
+#include <type_traits>
 
-namespace triton {
-namespace backend {
-namespace rapids {
-namespace detail {
+namespace triton { namespace backend { namespace rapids { namespace detail {
 
-template<typename T>
+template <typename T>
 struct owned_device_buffer<T, false> {
   using non_const_T = std::remove_const_t<T>;
-  owned_device_buffer(device_id_t device_id, std::size_t size, cudaStream_t stream)
+  owned_device_buffer(
+      device_id_t device_id, std::size_t size, cudaStream_t stream)
   {
-    throw TritonException(Error::Internal,
-                          "Attempted to use device buffer in non-GPU build");
+    throw TritonException(
+        Error::Internal, "Attempted to use device buffer in non-GPU build");
   }
 
   auto* get() const { return static_cast<T*>(nullptr); }
 };
 
-}  // namespace detail
-}  // namespace rapids
-}  // namespace backend
-}  // namespace triton
+}}}}  // namespace triton::backend::rapids::detail

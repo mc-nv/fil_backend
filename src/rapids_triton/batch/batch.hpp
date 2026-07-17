@@ -24,6 +24,7 @@
 #include <stdint.h>
 #include <triton/backend/backend_input_collector.h>
 #include <triton/backend/backend_output_responder.h>
+
 #include <algorithm>
 #include <chrono>
 #include <functional>
@@ -46,9 +47,7 @@
 #include <string>
 #include <vector>
 
-namespace triton {
-namespace backend {
-namespace rapids {
+namespace triton { namespace backend { namespace rapids {
 /**
  * @brief A representation of all data about a single batch of inference
  * requests
@@ -72,36 +71,29 @@ namespace rapids {
 struct Batch {
   using size_type = std::size_t;
 
-  Batch(TRITONBACKEND_Request** raw_requests,
-        request_size_t count,
-        TRITONBACKEND_MemoryManager& triton_mem_manager,
-        std::function<std::vector<size_type>(std::string const&, size_type)>&& get_output_shape,
-        std::function<void(TRITONBACKEND_Request*,
-                           time_point const&,
-                           time_point const&,
-                           time_point const&,
-                           time_point const&)>&& report_request_statistics,
-        bool use_pinned_input,
-        bool use_pinned_output,
-        size_type max_batch_size,
-        cudaStream_t stream)
-    : requests_{raw_requests, raw_requests + count},
-      responses_{construct_responses(requests_.begin(), requests_.end())},
-      get_output_shape_{std::move(get_output_shape)},
-      report_statistics_{std::move(report_request_statistics)},
-      collector_(raw_requests, count, &responses_, &triton_mem_manager, use_pinned_input, stream),
-      retained_output_buffers_{},
-      responder_{std::make_shared<BackendOutputResponder>(raw_requests,
-                                                          count,
-                                                          &responses_,
-                                                          max_batch_size,
-                                                          &triton_mem_manager,
-                                                          use_pinned_output,
-                                                          stream)},
-      stream_{stream},
-      start_time_{std::chrono::steady_clock::now()},
-      compute_start_time_{std::chrono::steady_clock::now()},
-      batch_size_{}
+  Batch(
+      TRITONBACKEND_Request** raw_requests, request_size_t count,
+      TRITONBACKEND_MemoryManager& triton_mem_manager,
+      std::function<std::vector<size_type>(std::string const&, size_type)>&&
+          get_output_shape,
+      std::function<void(
+          TRITONBACKEND_Request*, time_point const&, time_point const&,
+          time_point const&, time_point const&)>&& report_request_statistics,
+      bool use_pinned_input, bool use_pinned_output, size_type max_batch_size,
+      cudaStream_t stream)
+      : requests_{raw_requests, raw_requests + count},
+        responses_{construct_responses(requests_.begin(), requests_.end())},
+        get_output_shape_{std::move(get_output_shape)},
+        report_statistics_{std::move(report_request_statistics)},
+        collector_(
+            raw_requests, count, &responses_, &triton_mem_manager,
+            use_pinned_input, stream),
+        retained_output_buffers_{},
+        responder_{std::make_shared<BackendOutputResponder>(
+            raw_requests, count, &responses_, max_batch_size,
+            &triton_mem_manager, use_pinned_output, stream)},
+        stream_{stream}, start_time_{std::chrono::steady_clock::now()},
+        compute_start_time_{std::chrono::steady_clock::now()}, batch_size_{}
   {
   }
 
@@ -110,15 +102,19 @@ struct Batch {
   {
     auto result = std::vector<size_type>{};
     if (!requests_.empty()) {
-      result = get_triton_input_shape<T>(std::begin(requests_), std::end(requests_), name);
+      result = get_triton_input_shape<T>(
+          std::begin(requests_), std::end(requests_), name);
 
       auto input_batch_dim = size_type{};
-      if (result.size() > 0) { input_batch_dim = result[0]; }
+      if (result.size() > 0) {
+        input_batch_dim = result[0];
+      }
 
       if (batch_size_.has_value()) {
         if (batch_size_.value() != input_batch_dim) {
-          throw TritonException(Error::Internal,
-                                "all input tensors must have same batch dimension");
+          throw TritonException(
+              Error::Internal,
+              "all input tensors must have same batch dimension");
         }
       } else {
         batch_size_ = input_batch_dim;
@@ -128,15 +124,15 @@ struct Batch {
   }
 
   template <typename T>
-  auto get_input(std::string const& name,
-                 std::optional<MemoryType> const& memory_type,
-                 device_id_t device_id,
-                 cudaStream_t stream)
+  auto get_input(
+      std::string const& name, std::optional<MemoryType> const& memory_type,
+      device_id_t device_id, cudaStream_t stream)
   {
     auto shape = get_input_shape<T>(name);
-    auto size_bytes =
-      safe_multiply<std::size_t>(
-          sizeof(T), std::reduce(shape.begin(), shape.end(), std::size_t{1}, safe_multiply<std::size_t>));
+    auto size_bytes = safe_multiply<std::size_t>(
+        sizeof(T), std::reduce(
+                       shape.begin(), shape.end(), std::size_t{1},
+                       safe_multiply<std::size_t>));
     auto allowed_memory_configs = std::vector<std::pair<MemoryType, int64_t>>{};
     if (memory_type.has_value()) {
       allowed_memory_configs.emplace_back(memory_type.value(), device_id);
@@ -145,43 +141,42 @@ struct Batch {
       allowed_memory_configs.emplace_back(DeviceMemory, device_id);
     }
 
-    auto const* raw_buffer  = static_cast<char*>(nullptr);
-    auto reported_bytes     = std::size_t{};
-    auto reported_mem_type  = MemoryType{};
+    auto const* raw_buffer = static_cast<char*>(nullptr);
+    auto reported_bytes = std::size_t{};
+    auto reported_mem_type = MemoryType{};
     auto reported_device_id = int64_t{};
 
-    triton_check(
-      collector_.ProcessTensor(name.c_str(),
-                               static_cast<char*>(nullptr),  // Return data without copy if possible
-                               size_bytes,
-                               allowed_memory_configs,
-                               &raw_buffer,
-                               &reported_bytes,
-                               &reported_mem_type,
-                               &reported_device_id));
+    triton_check(collector_.ProcessTensor(
+        name.c_str(),
+        static_cast<char*>(nullptr),  // Return data without copy if possible
+        size_bytes, allowed_memory_configs, &raw_buffer, &reported_bytes,
+        &reported_mem_type, &reported_device_id));
 
-    if(collector_.Finalize()){
+    if (collector_.Finalize()) {
       if constexpr (IS_GPU_BUILD) {
         cuda_check(cudaStreamSynchronize(stream_));
       } else {
-        throw TritonException(Error::Internal, "stream synchronization required in non-GPU build");
+        throw TritonException(
+            Error::Internal,
+            "stream synchronization required in non-GPU build");
       }
     }
 
-    std::for_each(std::begin(responses_), std::end(responses_), [](auto* response) {
-      if (response == nullptr) {
-        throw TritonException(Error::Internal, "Input collection failed");
-      }
-    });
+    std::for_each(
+        std::begin(responses_), std::end(responses_), [](auto* response) {
+          if (response == nullptr) {
+            throw TritonException(Error::Internal, "Input collection failed");
+          }
+        });
 
-    auto buffer = Buffer(reinterpret_cast<T*>(raw_buffer),
-                         reported_bytes / sizeof(T),
-                         reported_mem_type,
-                         reported_device_id,
-                         stream);
+    auto buffer = Buffer(
+        reinterpret_cast<T*>(raw_buffer), reported_bytes / sizeof(T),
+        reported_mem_type, reported_device_id, stream);
 
-    if (memory_type && (reported_mem_type != memory_type || reported_device_id != device_id)) {
-      throw TritonException(Error::Internal, "data collected in wrong location");
+    if (memory_type &&
+        (reported_mem_type != memory_type || reported_device_id != device_id)) {
+      throw TritonException(
+          Error::Internal, "data collected in wrong location");
     }
 
     // Set start time of batch to time latest input tensor was retrieved
@@ -191,25 +186,26 @@ struct Batch {
   }
 
   template <typename T>
-  auto get_input(std::string const& name,
-                 std::optional<MemoryType> const& memory_type,
-                 device_id_t device_id)
+  auto get_input(
+      std::string const& name, std::optional<MemoryType> const& memory_type,
+      device_id_t device_id)
   {
     return get_input<T>(name, memory_type, device_id, stream_);
   }
 
   template <typename T>
-  auto get_output(std::string const& name,
-                  std::optional<MemoryType> const& memory_type,
-                  device_id_t device_id,
-                  cudaStream_t stream)
+  auto get_output(
+      std::string const& name, std::optional<MemoryType> const& memory_type,
+      device_id_t device_id, cudaStream_t stream)
   {
     if (!batch_size_.has_value()) {
-      throw TritonException(Error::Internal,
-                            "At least one input must be retrieved before any output");
+      throw TritonException(
+          Error::Internal,
+          "At least one input must be retrieved before any output");
     }
-    auto shape       = get_output_shape_(name, batch_size_.value());
-    auto buffer_size = std::reduce(shape.begin(), shape.end(), std::size_t{1}, safe_multiply<std::size_t>);
+    auto shape = get_output_shape_(name, batch_size_.value());
+    auto buffer_size = std::reduce(
+        shape.begin(), shape.end(), std::size_t{1}, safe_multiply<std::size_t>);
     auto final_memory_type = MemoryType{};
     if (memory_type.has_value()) {
       final_memory_type = memory_type.value();
@@ -220,21 +216,20 @@ struct Batch {
     }
     // OutputTensor receives a non-owning view. Keep the allocation alive until
     // this Batch is destroyed after response processing has completed.
-    auto retained_buffer =
-      std::make_shared<Buffer<T>>(buffer_size, final_memory_type, device_id, stream);
-    auto view = Buffer<T>(retained_buffer->data(),
-                          retained_buffer->size(),
-                          retained_buffer->mem_type(),
-                          retained_buffer->device(),
-                          retained_buffer->stream());
+    auto retained_buffer = std::make_shared<Buffer<T>>(
+        buffer_size, final_memory_type, device_id, stream);
+    auto view = Buffer<T>(
+        retained_buffer->data(), retained_buffer->size(),
+        retained_buffer->mem_type(), retained_buffer->device(),
+        retained_buffer->stream());
     retained_output_buffers_.push_back(std::move(retained_buffer));
     return OutputTensor<T>(std::move(shape), std::move(view), name, responder_);
   }
 
   template <typename T>
-  auto get_output(std::string const& name,
-                  std::optional<MemoryType> const& memory_type,
-                  device_id_t device_id)
+  auto get_output(
+      std::string const& name, std::optional<MemoryType> const& memory_type,
+      device_id_t device_id)
   {
     return get_output<T>(name, memory_type, device_id, stream_);
   }
@@ -246,20 +241,21 @@ struct Batch {
   void finalize(TRITONSERVER_Error* err)
   {
     auto compute_end_time = std::chrono::steady_clock::now();
-    if (responder_->Finalize()) { cuda_check(cudaStreamSynchronize(stream_)); }
+    if (responder_->Finalize()) {
+      cuda_check(cudaStreamSynchronize(stream_));
+    }
 
     send_responses(std::begin(responses_), std::end(responses_), err);
 
     // Triton resumes ownership of failed requests; only release on success
     if (err == nullptr) {
       std::for_each(
-        std::begin(requests_), std::end(requests_), [this, &compute_end_time](auto& request) {
-          report_statistics_(request,
-                             start_time_,
-                             compute_start_time_,
-                             compute_end_time,
-                             std::chrono::steady_clock::now());
-        });
+          std::begin(requests_), std::end(requests_),
+          [this, &compute_end_time](auto& request) {
+            report_statistics_(
+                request, start_time_, compute_start_time_, compute_end_time,
+                std::chrono::steady_clock::now());
+          });
       release_requests(std::begin(requests_), std::end(requests_));
     }
   }
@@ -267,13 +263,12 @@ struct Batch {
  private:
   std::vector<TRITONBACKEND_Request*> requests_;
   std::vector<TRITONBACKEND_Response*> responses_;
-  std::function<std::vector<size_type>(std::string const&, size_type)> get_output_shape_;
-  std::function<void(TRITONBACKEND_Request*,
-                     time_point const&,
-                     time_point const&,
-                     time_point const&,
-                     time_point const&)>
-    report_statistics_;
+  std::function<std::vector<size_type>(std::string const&, size_type)>
+      get_output_shape_;
+  std::function<void(
+      TRITONBACKEND_Request*, time_point const&, time_point const&,
+      time_point const&, time_point const&)>
+      report_statistics_;
   BackendInputCollector collector_;
   // Declared before responder_ so retained source buffers outlive it. The
   // buffers are released when this Batch leaves execute().
@@ -284,6 +279,4 @@ struct Batch {
   std::chrono::time_point<std::chrono::steady_clock> compute_start_time_;
   std::optional<size_type> batch_size_;
 };
-}  // namespace rapids
-}  // namespace backend
-}  // namespace triton
+}}}  // namespace triton::backend::rapids
