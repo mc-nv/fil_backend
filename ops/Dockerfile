@@ -103,7 +103,6 @@ FROM base as build-prep
 RUN mkdir -p /rapids_triton/build /rapids_triton/install
 
 COPY ./src /rapids_triton/src
-COPY ./rapids_triton /rapids_triton/rapids_triton
 COPY ./CMakeLists.txt /rapids_triton
 COPY ./cmake /rapids_triton/cmake
 
