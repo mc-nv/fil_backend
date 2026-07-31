@@ -1,5 +1,5 @@
 #=============================================================================
-# Copyright (c) 2020-2024, NVIDIA CORPORATION.
+# Copyright (c) 2020-2026, NVIDIA CORPORATION.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,8 +28,6 @@ set(TRITON_BACKEND_REPO_TAG "main" CACHE STRING "Tag for triton-inference-server
 # Specify *minimum* version for all RAPIDS dependencies
 # Some RAPIDS deps may have later versions
 set(RAPIDS_DEPENDENCIES_VERSION "26.06" CACHE STRING "RAPIDS projects dependencies version")
-set(RAPIDS_TRITON_REPO_PATH "https://github.com/rapidsai/rapids-triton.git" CACHE STRING "Git repository to pull rapids_triton from")
-set(RAPIDS_TRITON_REPO_TAG "v${RAPIDS_DEPENDENCIES_VERSION}.00" CACHE STRING "Tag for rapidsai/rapids-triton repo")
 
 if(TRITON_FIL_DOCKER_BUILD)
   project(RAPIDS_TRITON_BACKEND VERSION 26.06.00)
@@ -52,8 +50,6 @@ if(TRITON_FIL_DOCKER_BUILD)
       --build-arg TRITON_CORE_REPO_TAG=${TRITON_CORE_REPO_TAG}
       --build-arg TRITON_BACKEND_REPO_TAG=${TRITON_BACKEND_REPO_TAG}
       --build-arg RAPIDS_DEPENDENCIES_VERSION=${RAPIDS_DEPENDENCIES_VERSION}
-      --build-arg RAPIDS_TRITON_REPO_TAG=${RAPIDS_TRITON_REPO_TAG}
-      --build-arg RAPIDS_TRITON_REPO_PATH=${RAPIDS_TRITON_REPO_PATH}
       -f ${CMAKE_CURRENT_LIST_DIR}/ops/Dockerfile
       ${CMAKE_CURRENT_LIST_DIR}
     COMMAND docker rm triton_fil_builder || echo 'error ignored..' || true
@@ -82,9 +78,9 @@ else()
 
   ##############################################################################
   # - Prepare rapids-cmake -----------------------------------------------------
-  set(rapids-cmake-version 26.06)
+  set(rapids-cmake-version 26.08)
   file(DOWNLOAD
-    https://raw.githubusercontent.com/rapidsai/rapids-cmake/refs/tags/v26.06.00/RAPIDS.cmake
+    https://raw.githubusercontent.com/rapidsai/rapids-cmake/691ccac03770627311b271e9dc5820f6ea2b6346/RAPIDS.cmake
       ${CMAKE_BINARY_DIR}/RAPIDS.cmake)
   include(${CMAKE_BINARY_DIR}/RAPIDS.cmake)
   include(rapids-cmake)
@@ -179,7 +175,8 @@ else()
   else()
     include(cmake/thirdparty/get_treelite.cmake)
   endif()
-  include(cmake/thirdparty/get_rapids-triton.cmake)
+  include(cmake/thirdparty/get_rapidjson.cmake)
+  include(cmake/thirdparty/get_triton.cmake)
   include(cmake/thirdparty/get_nvforest.cmake)
 
   if(BUILD_TESTS)
@@ -240,9 +237,10 @@ else()
   target_link_libraries(${BACKEND_TARGET}
   PRIVATE
     $<$<BOOL:${TRITON_ENABLE_GPU}>:cuml>
+    $<$<BOOL:${TRITON_ENABLE_GPU}>:rmm::rmm>
+    $<$<BOOL:${TRITON_ENABLE_GPU}>:raft::raft>
     ${TREELITE_LIBS}
-    nvforest::nvforest++
-    rapids_triton::rapids_triton
+    nvforest::nvforest
     triton-core-serverstub
     triton-backend-utils
     "${TRITONSERVER_LIB}"
@@ -262,9 +260,12 @@ else()
   )
 
   if(TRITON_ENABLE_GPU)
-    list(APPEND BACKEND_TARGET "cuml" "rmm" "rapids_logger")
+    list(APPEND BACKEND_TARGET "cuml" "rmm")
+    if(TARGET "rapids_logger")
+      list(APPEND BACKEND_TARGET "rapids_logger")
+    endif()
   endif()
-  list(APPEND BACKEND_TARGET "nvforest++")
+  list(APPEND BACKEND_TARGET "nvforest")
 
   if(NOT TRITON_FIL_USE_TREELITE_STATIC)
     list(APPEND BACKEND_TARGET ${TREELITE_LIBS_NO_PREFIX})
@@ -278,8 +279,9 @@ else()
   ##############################################################################
   # - build test executable ----------------------------------------------------
 
-  # TODO (wphicks)
-  # if(BUILD_TESTS)
-  #   include(test/CMakeLists.txt)
-  # endif()
+  if(BUILD_TESTS)
+    include(${rapids-cmake-dir}/cpm/gtest.cmake)
+    rapids_cpm_gtest(BUILD_STATIC)
+    add_subdirectory(test)
+  endif()
 endif() # TRITON_FIL_DOCKER_BUILD

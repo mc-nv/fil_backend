@@ -21,17 +21,13 @@ function(find_and_configure_nvforest)
                           "${multiValueArgs}" ${ARGN} )
 
     rapids_cpm_find(nvforest ${PKG_VERSION}
-      GLOBAL_TARGETS      nvforest++
+      GLOBAL_TARGETS      nvforest
       BUILD_EXPORT_SET    rapids_triton-exports
       INSTALL_EXPORT_SET  rapids_triton-exports
         CPM_ARGS
             GIT_REPOSITORY https://github.com/${PKG_FORK}/nvforest.git
             GIT_TAG        ${PKG_PINNED_TAG}
             SOURCE_SUBDIR  cpp
-            GIT_SHALLOW    TRUE
-            # Patch nvForest to exclude RAFT if GPU is disabled
-            # TODO(hcho3): Upstream patch to nvForest
-            PATCHES        "./patches/nvforest.patch"
             OPTIONS
               "BUILD_NVFOREST_TESTS OFF"
               "BUILD_SHARED_LIBS ON"
@@ -44,9 +40,9 @@ function(find_and_configure_nvforest)
 
 endfunction()
 
-find_and_configure_nvforest(VERSION    26.06
+find_and_configure_nvforest(VERSION    26.08
                             FORK       rapidsai
-                            PINNED_TAG a9216c6162daef1434fd4cfa554c7a963c6b2016
+                            PINNED_TAG dd49f1a906654f59f20023849b2f1cae820f601f
                             USE_TREELITE_STATIC ${TRITON_FIL_USE_TREELITE_STATIC}
                             ENABLE_GPU ${TRITON_ENABLE_GPU}
                             )

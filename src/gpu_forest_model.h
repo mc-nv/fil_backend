@@ -25,9 +25,10 @@
 
 #include <cstddef>
 #include <memory>
-#include <nvforest/detail/raft_proto/cuda_stream.hpp>
-#include <nvforest/detail/raft_proto/device_type.hpp>
+#include <nvforest/cuda_stream.hpp>
+#include <nvforest/device_type.hpp>
 #include <nvforest/forest_model.hpp>
+#include <nvforest/handle.hpp>
 #include <nvforest/infer_kind.hpp>
 #include <nvforest/treelite_importer.hpp>
 #include <raft/core/handle.hpp>
@@ -48,8 +49,8 @@ struct ForestModel<rapids::DeviceMemory> {
           auto result = nvforest::import_from_treelite_handle(
               tl_model_->handle(),
               detail::name_to_nvforest_layout(config.layout), 128, false,
-              raft_proto::device_type::gpu, device_id,
-              raft_proto::cuda_stream{stream});
+              nvforest::device_type::gpu, device_id,
+              nvforest::cuda_stream{stream});
           return result;
         }()}
   {
@@ -100,9 +101,9 @@ struct ForestModel<rapids::DeviceMemory> {
     }
 
     nvforest_model_.predict(
-        raft_proto::handle_t{raft_handle_}, output_buffer.data(),
-        const_cast<float*>(input.data()), samples, raft_proto::device_type::gpu,
-        raft_proto::device_type::gpu, nvforest::infer_kind::default_kind,
+        nvforest::handle_t{raft_handle_}, output_buffer.data(),
+        const_cast<float*>(input.data()), samples, nvforest::device_type::gpu,
+        nvforest::device_type::gpu, nvforest::infer_kind::default_kind,
         tl_model_->config().chunk_size);
     raft_handle_.sync_stream();
     output_buffer.stream_synchronize();
