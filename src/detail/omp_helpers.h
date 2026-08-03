@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, NVIDIA CORPORATION.
+ * Copyright (c) 2022-2026, NVIDIA CORPORATION.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,10 @@
  */
 
 #pragma once
+#include <names.h>
 #include <omp.h>
+
+namespace triton::backend { namespace NAMESPACE { namespace detail {
 
 template <typename T>
 struct thread_count {
@@ -36,3 +39,5 @@ struct thread_count {
  private:
   T value;
 };
+
+}}}  // namespace triton::backend::NAMESPACE::detail
