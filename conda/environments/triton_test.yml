@@ -6,9 +6,11 @@ channels:
 dependencies:
   - aws-sdk-cpp
   - clang-tools=19.1.7
-  - cuda-version=12.8
-  - cudf=26.06
-  - cuml=26.06
+  - cuda-version=13.3
+  - cuda-python=13.3
+  - cudf=26.08
+  - cuml=26.08
+  - nvforest=26.08
   - flake8
   - hypothesis
   - lightgbm
@@ -23,4 +25,3 @@ dependencies:
   - pip:
       - tritonclient[all]
       - protobuf
-      - git+https://github.com/rapidsai/rapids-triton.git@branch-25.08#subdirectory=python
